@@ -1,0 +1,37 @@
+body {
+    background: radial-gradient(circle at top, #0f172a, #05070f);
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: white;
+}
+
+.panel {
+    background: #0b0f1a;
+    border: 1px solid #1f2937;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 0 15px rgba(0,255,255,0.08);
+    margin-bottom: 15px;
+}
+
+.header-bar {
+    background: #0b0f1a;
+    border-bottom: 2px solid #1f2937;
+    padding: 12px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0,255,255,0.15);
+}
+
+.Select-control, .Select-menu-outer {
+    background-color: #111827 !important;
+    color: white !important;
+    border: 1px solid #334155 !important;
+}
+
+.Select-value-label, .Select-placeholder {
+    color: white !important;
+}
+
+.js-plotly-plot, .plot-container {
+    background-color: #0b0f1a !important;
+}
