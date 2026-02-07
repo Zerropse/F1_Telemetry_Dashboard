@@ -1,4 +1,4 @@
-<img width="1676" height="728" alt="Screenshot 2026-02-07 at 1 03 58 PM" src="https://github.com/user-attachments/assets/064b8abc-54e8-40eb-9e24-086d3814dfa8" />## 🏎️ F1 Telemetry Dashboard — Interactive Race Engineer Tool
+🏎️ F1 Telemetry Dashboard — Interactive Race Engineer Tool
 
 An interactive **Formula 1 telemetry analysis dashboard** built with **FastF1** and **Dash** that lets you visualize, compare, and replay real F1 driver data like a race engineer.
 
@@ -103,6 +103,13 @@ Open in browser → start analyzing laps.
 ### 🙌 Inspiration
 
 Built as a passion project to explore how **data science meets motorsport** and how raw telemetry can be turned into meaningful visual insights.
+---
+Here are some more pictures of the app.
+
+<img width="1698" height="758" alt="Screenshot 2026-02-07 at 12 47 59 PM" src="https://github.com/user-attachments/assets/f36ce11e-0f7a-454e-9f52-e1da302061d4" />
+<img width="1710" height="1112" alt="Screenshot 2026-02-07 at 12 42 03 PM" src="https://github.com/user-attachments/assets/8bca43f6-3a15-4d54-96e8-8a5be77ae9a7" />
+<img width="1676" height="728" alt="Screenshot 2026-02-07 at 1 03 58 PM" src="https://github.com/user-attachments/assets/5bdfba20-3005-4b53-8aa4-73fca8d81314" />
+
 
 ---
 
