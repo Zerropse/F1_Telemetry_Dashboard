@@ -5,211 +5,42 @@ import plotly.graph_objects as go
 from fastf1.utils import delta_time
 import os
 
+# ---------- FASTF1 CACHE (Render safe) ----------
 cache_dir = "/tmp/fastf1_cache"
 os.makedirs(cache_dir, exist_ok=True)
 fastf1.Cache.enable_cache(cache_dir)
 
+# ---------- GLOBAL SESSION CACHE (CRITICAL FIX) ----------
+SESSION_CACHE = {}
+
+def get_session(year, track, session_type):
+    key = f"{year}_{track}_{session_type}"
+    if key not in SESSION_CACHE:
+        s = fastf1.get_session(year, track, session_type)
+        s.load()
+        SESSION_CACHE[key] = s
+    return SESSION_CACHE[key]
 
 
-# ---------- SESSION ----------
-def load_session(year, track, session_type):
-    s = fastf1.get_session(year, track, session_type)
-    s.load()
-    return s
-
-
+# ---------- TELEMETRY ----------
 def get_tel(session, driver):
-    lap = session.laps.pick_driver(driver).pick_fastest()
+    lap = session.laps.pick_drivers([driver]).pick_fastest()
     tel = lap.get_telemetry()
     return lap, tel[['Distance','Speed','Throttle','Brake','X','Y']]
 
 
-# ---------- ANIMATED TRACK WITH LIVE HUD ----------
-def build_animated_track(tel, driver, lap):
-    x = tel['X'] - tel['X'].mean()
-    y = tel['Y'] - tel['Y'].mean()
-
-    speed = tel['Speed']
-    throttle = tel['Throttle']
-    brake = tel['Brake']
-
-    step = 8
-    frame_duration = 240
-    frames = []
-
-    for idx, i in enumerate(range(10, len(x), step)):
-        throttle_pct = throttle.iloc[:i].mean()
-        brake_pct = brake.iloc[:i].mean() * 100
-
-        frames.append(
-            go.Frame(
-                name=str(idx),
-                data=[
-                    go.Scatter(x=x, y=y, mode='lines',
-                               line=dict(color='white', width=3),
-                               name='Track'),
-                    go.Scatter(
-                        x=[x.iloc[i]],
-                        y=[y.iloc[i]],
-                        mode='markers+text',
-                        name=driver,
-                        marker=dict(size=18, color='red'),
-                        text=[f"{int(speed.iloc[i])} km/h"],
-                        textposition="top center",
-                        textfont=dict(color="white", size=13)
-                    )
-                ],
-                layout=go.Layout(
-                    annotations=[
-                        dict(
-                            x=0.02, y=0.95,
-                            xref='paper', yref='paper',
-                            showarrow=False,
-                            align='left',
-                            font=dict(size=16, color='white'),
-                            text=(
-                                f"<b>{driver}</b><br>"
-                                f"{str(lap['LapTime'])[10:]}<br>"
-                                f"Throttle: {throttle_pct:.1f}%<br>"
-                                f"Brake: {brake_pct:.1f}%"
-                            )
-                        )
-                    ]
-                )
-            )
-        )
-
-    fig = go.Figure(
-        data=[
-            go.Scatter(x=x, y=y, mode='lines',
-                       line=dict(color='white', width=3)),
-            go.Scatter(
-                x=[x.iloc[10]],
-                y=[y.iloc[10]],
-                mode='markers+text',
-                name=driver,
-                marker=dict(size=18, color='red'),
-                text=[f"{int(speed.iloc[10])} km/h"],
-                textposition="top center",
-                textfont=dict(color="white", size=13)
-            )
-        ],
-        frames=frames
-    )
-
-    fig.update_layout(
-        template="plotly_dark",
-        title=f"{driver} Racing Line Replay",
-        xaxis_visible=False,
-        yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
-        height=500,
-        updatemenus=[{
-            "type": "buttons",
-            "direction": "left",
-            "bgcolor": "black",
-            "font": {"color": "white"},
-            "buttons": [{
-                "label": "▶ Play",
-                "method": "animate",
-                "args": [None, {
-                    "frame": {"duration": frame_duration, "redraw": True},
-                    "fromcurrent": True
-                }]
-            }]
-        }]
-    )
-
-    return fig
+# ---------- (ALL YOUR GRAPH / TABLE FUNCTIONS STAY SAME) ----------
+# build_animated_track
+# compare_speed
+# build_delta
+# single_graph
+# build_results_table
+# ⬆️ keep them EXACTLY as you wrote
 
 
-# ---------- GRAPHS ----------
-def compare_speed(tel1, tel2, d1, d2):
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=tel1['Distance'], y=tel1['Speed'], name=d1))
-    fig.add_trace(go.Scatter(x=tel2['Distance'], y=tel2['Speed'], name=d2))
-    fig.update_layout(template="plotly_dark", title="Speed Comparison", height=350)
-    return fig
-
-
-def build_delta(lap1, lap2, d1, d2):
-    delta, ref, comp = delta_time(lap1, lap2)
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=ref['Distance'], y=delta, name=f"{d1} vs {d2}"))
-    fig.update_layout(template="plotly_dark",
-                      title="Delta Time",
-                      height=350)
-    return fig
-
-
-def single_graph(tel, driver, col, title):
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=tel['Distance'], y=tel[col], name=driver))
-    fig.update_layout(template="plotly_dark",
-                      title=f"{driver} {title}",
-                      height=300)
-    return fig
-
-
-# ---------- RESULTS TABLE ----------
-# ---------- RESULTS TABLE ----------
-def build_results_table(session, session_type):
-
-    if session_type == 'Q':
-        res = session.results[['Position','Abbreviation','TeamName','Q1','Q2','Q3']]
-        res.columns = ['Pos','Driver','Team','Q1','Q2','Q3']
-        for col in ['Q1','Q2','Q3']:
-            res[col] = res[col].apply(lambda x: "" if pd.isna(x) else str(x)[10:])
-
-    else:
-        results = session.results.copy()
-
-        res = results[['Position','Abbreviation','TeamName',
-                       'Time','Status','Points']].copy()
-
-        res.columns = ['Pos','Driver','Team','Time','Status','Points']
-
-        formatted = []
-
-        for idx, row in res.iterrows():
-            status = str(row['Status'])
-
-            # Winner → full race time
-            if idx == 0:
-                formatted.append(str(row['Time'])[10:])
-
-            # Lapped cars → use FIA text
-            elif 'Lap' in status:
-                formatted.append(status)
-
-            # Retired
-            elif 'Retired' in status:
-                formatted.append('Retired')
-
-            # DNS
-            elif 'Did not start' in status:
-                formatted.append('DNS')
-
-            # DSQ
-            elif 'Disqualified' in status:
-                formatted.append('DSQ')
-
-            # Normal finishers → FastF1 gap already correct
-            else:
-                if isinstance(row['Time'], pd.Timedelta):
-                    formatted.append(str(row['Time'])[10:])
-                else:
-                    formatted.append(str(row['Time']))
-
-        res['Gap to Leader'] = formatted
-        res.drop(columns=['Time','Status'], inplace=True)
-
-    return res.to_dict('records'), [{"name": i, "id": i} for i in res.columns]
-
-
-# ---------- APP LAYOUT ----------
+# ---------- APP ----------
 app = Dash(__name__)
 server = app.server
-
 
 app.layout = html.Div([
     html.H2("F1 Telemetry Dashboard", style={'textAlign': 'center'}),
@@ -256,6 +87,7 @@ app.layout = html.Div([
 ])
 
 # ---------- CALLBACKS ----------
+
 @app.callback(
     Output('track','options'),
     Output('track','value'),
@@ -279,8 +111,8 @@ def update_tracks(year):
     Input('session','value'),
 )
 def update_drivers(year, track, session_type):
-    s = load_session(year, track, session_type)
-    drivers = sorted(s.laps['Driver'].unique())
+    session = get_session(year, track, session_type)  # ✅ uses cache
+    drivers = sorted(session.laps['Driver'].unique())
     opts = [{'label':d, 'value':d} for d in drivers]
     return opts, opts, drivers[0], drivers[1]
 
@@ -304,7 +136,7 @@ def update_drivers(year, track, session_type):
 )
 def update(year, track, session_type, d1, d2):
 
-    session = load_session(year, track, session_type)
+    session = get_session(year, track, session_type)  # ✅ uses cache once
 
     lap1, tel1 = get_tel(session, d1)
     lap2, tel2 = get_tel(session, d2)
@@ -323,7 +155,6 @@ def update(year, track, session_type, d1, d2):
         data, cols
     )
 
-server = app.server
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8050)
