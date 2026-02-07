@@ -2,8 +2,8 @@
 
 An interactive **Formula 1 telemetry analysis dashboard** built with **FastF1** and **Dash** that lets you visualize, compare, and replay real F1 driver data like a race engineer.
 
-**This project turns raw telemetry into an immersive visual tool where you can see how drivers take corners, compare racing lines, and watch throttle/brake behavior live on the track.
-**---
+**This project turns raw telemetry into an immersive visual tool where you can see how drivers take corners, compare racing lines, and watch throttle/brake behavior live on the track.**
+---
 <img width="1710" height="1112" alt="image" src="https://github.com/user-attachments/assets/08efcc3a-7136-4ca1-81a3-bd65daf2d0aa" />
 
 ---
