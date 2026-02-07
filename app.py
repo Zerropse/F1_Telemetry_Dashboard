@@ -3,8 +3,12 @@ import pandas as pd
 from dash import Dash, dcc, html, Input, Output, dash_table
 import plotly.graph_objects as go
 from fastf1.utils import delta_time
+import os
 
-fastf1.Cache.enable_cache('cache')
+cache_dir = "/tmp/fastf1_cache"
+os.makedirs(cache_dir, exist_ok=True)
+fastf1.Cache.enable_cache(cache_dir)
+
 
 
 # ---------- SESSION ----------
