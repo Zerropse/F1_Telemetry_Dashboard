@@ -6,9 +6,13 @@ from fastf1.utils import delta_time
 import os
 
 # ---------- FASTF1 CACHE (Render safe) ----------
+from fastf1 import Cache
+
 cache_dir = "/tmp/fastf1_cache"
 os.makedirs(cache_dir, exist_ok=True)
-fastf1.Cache.enable_cache(cache_dir)
+
+# 🔥 Disable SQLite HTTP cache (fixes Render + gunicorn crash)
+Cache.enable_cache(cache_dir, use_requests_cache=False)
 
 # ---------- GLOBAL SESSION CACHE ----------
 SESSION_CACHE = {}
