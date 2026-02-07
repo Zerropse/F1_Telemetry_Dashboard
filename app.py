@@ -10,14 +10,17 @@ cache_dir = "/tmp/fastf1_cache"
 os.makedirs(cache_dir, exist_ok=True)
 fastf1.Cache.enable_cache(cache_dir)
 
-# ---------- GLOBAL SESSION CACHE (CRITICAL FIX) ----------
+# ---------- GLOBAL SESSION CACHE ----------
 SESSION_CACHE = {}
 
 def get_session(year, track, session_type):
     key = f"{year}_{track}_{session_type}"
     if key not in SESSION_CACHE:
         s = fastf1.get_session(year, track, session_type)
-        s.load()
+
+        # 🔥 LOAD ONLY WHAT IS NEEDED (critical for Render memory)
+        s.load(laps=True, telemetry=True, weather=False, messages=False)
+
         SESSION_CACHE[key] = s
     return SESSION_CACHE[key]
 
@@ -29,13 +32,94 @@ def get_tel(session, driver):
     return lap, tel[['Distance','Speed','Throttle','Brake','X','Y']]
 
 
-# ---------- (ALL YOUR GRAPH / TABLE FUNCTIONS STAY SAME) ----------
-# build_animated_track
-# compare_speed
-# build_delta
-# single_graph
-# build_results_table
-# ⬆️ keep them EXACTLY as you wrote
+# ---------- GRAPHS ----------
+def build_animated_track(tel, driver, lap):
+    x = tel['X'] - tel['X'].mean()
+    y = tel['Y'] - tel['Y'].mean()
+
+    speed = tel['Speed']
+    throttle = tel['Throttle']
+    brake = tel['Brake']
+
+    step = 8
+    frame_duration = 240
+    frames = []
+
+    for idx, i in enumerate(range(10, len(x), step)):
+        frames.append(
+            go.Frame(
+                name=str(idx),
+                data=[
+                    go.Scatter(x=x, y=y, mode='lines',
+                               line=dict(width=3)),
+                    go.Scatter(
+                        x=[x.iloc[i]],
+                        y=[y.iloc[i]],
+                        mode='markers+text',
+                        marker=dict(size=16),
+                        text=[f"{int(speed.iloc[i])} km/h"],
+                        textposition="top center",
+                    )
+                ]
+            )
+        )
+
+    fig = go.Figure(
+        data=[
+            go.Scatter(x=x, y=y, mode='lines'),
+            go.Scatter(x=[x.iloc[10]], y=[y.iloc[10]],
+                       mode='markers')
+        ],
+        frames=frames
+    )
+
+    fig.update_layout(
+        template="plotly_dark",
+        title=f"{driver} Racing Line Replay",
+        xaxis_visible=False,
+        yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
+        height=500,
+        updatemenus=[{
+            "type": "buttons",
+            "buttons": [{
+                "label": "▶ Play",
+                "method": "animate",
+                "args": [None, {"frame": {"duration": frame_duration}}]
+            }]
+        }]
+    )
+
+    return fig
+
+
+def compare_speed(tel1, tel2, d1, d2):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=tel1['Distance'], y=tel1['Speed'], name=d1))
+    fig.add_trace(go.Scatter(x=tel2['Distance'], y=tel2['Speed'], name=d2))
+    fig.update_layout(template="plotly_dark", title="Speed Comparison", height=350)
+    return fig
+
+
+def build_delta(lap1, lap2, d1, d2):
+    delta, ref, comp = delta_time(lap1, lap2)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=ref['Distance'], y=delta, name=f"{d1} vs {d2}"))
+    fig.update_layout(template="plotly_dark", title="Delta Time", height=350)
+    return fig
+
+
+def single_graph(tel, driver, col, title):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=tel['Distance'], y=tel[col], name=driver))
+    fig.update_layout(template="plotly_dark",
+                      title=f"{driver} {title}",
+                      height=300)
+    return fig
+
+
+def build_results_table(session, session_type):
+    res = session.results[['Position','Abbreviation','TeamName']]
+    return res.to_dict('records'), [{"name": i, "id": i} for i in res.columns]
 
 
 # ---------- APP ----------
@@ -78,15 +162,9 @@ app.layout = html.Div([
 
     html.H3("Session Results", style={'textAlign': 'center', 'marginTop': '40px'}),
 
-    dash_table.DataTable(
-        id='results_table',
-        page_size=20,
-        style_header={'backgroundColor': '#111', 'color': 'white', 'fontWeight': 'bold'},
-        style_cell={'backgroundColor': '#0b0f1a', 'color': 'white', 'textAlign': 'center'}
-    )
+    dash_table.DataTable(id='results_table', page_size=20)
 ])
 
-# ---------- CALLBACKS ----------
 
 @app.callback(
     Output('track','options'),
@@ -95,7 +173,6 @@ app.layout = html.Div([
 )
 def update_tracks(year):
     schedule = fastf1.get_event_schedule(year)
-    schedule = schedule[schedule['EventFormat'] != 'testing']
     opts = [{'label':row['EventName'], 'value':row['EventName']}
             for _, row in schedule.iterrows()]
     return opts, opts[0]['value']
@@ -111,7 +188,7 @@ def update_tracks(year):
     Input('session','value'),
 )
 def update_drivers(year, track, session_type):
-    session = get_session(year, track, session_type)  # ✅ uses cache
+    session = get_session(year, track, session_type)
     drivers = sorted(session.laps['Driver'].unique())
     opts = [{'label':d, 'value':d} for d in drivers]
     return opts, opts, drivers[0], drivers[1]
@@ -135,8 +212,7 @@ def update_drivers(year, track, session_type):
     Input('driver2','value'),
 )
 def update(year, track, session_type, d1, d2):
-
-    session = get_session(year, track, session_type)  # ✅ uses cache once
+    session = get_session(year, track, session_type)
 
     lap1, tel1 = get_tel(session, d1)
     lap2, tel2 = get_tel(session, d2)
