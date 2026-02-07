@@ -204,6 +204,8 @@ def build_results_table(session, session_type):
 
 # ---------- APP LAYOUT ----------
 app = Dash(__name__)
+server = app.server
+
 
 app.layout = html.Div([
     html.H2("F1 Telemetry Dashboard", style={'textAlign': 'center'}),
