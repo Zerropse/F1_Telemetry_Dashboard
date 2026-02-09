@@ -11,7 +11,6 @@ from fastf1 import Cache
 cache_dir = "/tmp/fastf1_cache"
 os.makedirs(cache_dir, exist_ok=True)
 
-# 🔥 Disable SQLite HTTP cache (fixes Render + gunicorn crash)
 Cache.enable_cache(cache_dir, use_requests_cache=False)
 
 # ---------- GLOBAL SESSION CACHE ----------
@@ -168,7 +167,6 @@ app.layout = html.Div([
 
     dash_table.DataTable(id='results_table', page_size=20)
 ])
-
 
 @app.callback(
     Output('track','options'),
