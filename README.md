@@ -10,17 +10,17 @@ An interactive **Formula 1 telemetry analysis dashboard** built with **FastF1** 
 
 ### 🚀 What this project does
 
-* 📍 Draws the **exact racing line** of any driver on any circuit
-* 🟢 Animates a **moving car pointer** along the lap
-* 🎮 Play / Pause controls + adjustable replay speed
-* ⚡ Shows **live speed** next to the moving car
-* 🟩 Live **Throttle** bar and 🟥 **Brake** bar synced with the pointer
-* 🆚 Compare **two drivers** on the same session
-* 📈 Speed trace comparison across the lap distance
-* 📊 Automatic **Qualifying / Race results** table
-* 🖼️ Driver photo displayed above each telemetry map
-* 🌍 Supports most tracks from the F1 calendar
-* 👥 Full driver grid support
+* 📍 Draws the **exact racing line** of any driver on any circuit.
+* 🟢 Animates a **moving car pointer** along the lap.
+* 🎮 Play / Pause controls + adjustable replay speed.
+* ⚡ Shows **live speed** next to the moving car.
+* 🟩 Live **Throttle** bar and 🟥 **Brake** bar synced with the pointer.
+* 🆚 Compare **two drivers** on the same session.
+* 📈 Speed trace comparison across the lap distance.
+* 📊 Automatic **Qualifying / Race results** table.
+* 🖼️ Driver photo displayed above each telemetry map.
+* 🌍 Supports most tracks from the F1 calendar.
+* 👥 Full driver grid support from 2021 to 2025.
 
 ---
 
